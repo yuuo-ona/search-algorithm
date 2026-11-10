@@ -1,0 +1,144 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>探索アルゴリズム可視化</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="app-header">
+    <h1>探索アルゴリズム可視化</h1>
+    <nav class="tabs" role="tablist">
+      <button class="tab active" role="tab" data-tab="grid" aria-selected="true">経路探索</button>
+      <button class="tab" role="tab" data-tab="array" aria-selected="false">配列探索</button>
+      <button class="tab" role="tab" data-tab="anneal" aria-selected="false">焼きなまし法</button>
+    </nav>
+  </header>
+
+  <main class="app">
+    <section class="toolbar">
+      <label class="field">アルゴリズム
+        <select id="algo"></select>
+      </label>
+      <div class="btn-group">
+        <button id="run" class="btn primary">実行</button>
+        <button id="step" class="btn">1ステップ</button>
+        <button id="reset" class="btn">リセット</button>
+      </div>
+      <label class="field speed">速度
+        <input type="range" id="speed" min="1" max="10" value="6">
+      </label>
+    </section>
+
+    <div class="layout">
+      <div class="stage">
+        <!-- 経路探索 -->
+        <section class="view" id="view-grid">
+          <div class="options">
+            <div class="seg" id="grid-tools">
+              <button class="seg-btn active" data-tool="1">壁</button>
+              <button class="seg-btn" data-tool="2">重み (×5)</button>
+              <button class="seg-btn" data-tool="0">消去</button>
+            </div>
+            <button class="btn small" id="grid-maze">迷路生成</button>
+            <button class="btn small" id="grid-random">ランダム壁</button>
+            <button class="btn small" id="grid-weights">ランダム重み</button>
+            <button class="btn small" id="grid-clear">盤面クリア</button>
+            <label class="field" id="beam-field" hidden>ビーム幅
+              <input type="range" id="beam-width" min="1" max="10" value="3">
+              <output id="beam-width-out"></output>
+            </label>
+          </div>
+          <div class="canvas-wrap"><canvas id="grid-canvas"></canvas></div>
+          <p class="hint">ドラッグで壁・重みを描画。S（スタート）と G（ゴール）はドラッグで移動できます。</p>
+          <ul class="legend">
+            <li><span class="chip" style="--c: var(--cell-frontier)"></span>探索候補</li>
+            <li><span class="chip" style="--c: var(--cell-visited)"></span>探索済み</li>
+            <li><span class="chip" style="--c: var(--cell-current)"></span>展開中</li>
+            <li><span class="chip" style="--c: var(--cell-pruned)"></span>枝刈り（ビーム）</li>
+            <li><span class="chip" style="--c: var(--cell-path)"></span>経路</li>
+            <li><span class="chip" style="--c: var(--cell-wall)"></span>壁</li>
+            <li><span class="chip dot" style="--c: var(--cell-weight)"></span>重み（コスト5）</li>
+          </ul>
+        </section>
+
+        <!-- 配列探索 -->
+        <section class="view" id="view-array" hidden>
+          <div class="options">
+            <label class="field">要素数
+              <input type="range" id="arr-size" min="8" max="64" value="24">
+              <output id="arr-size-out"></output>
+            </label>
+            <label class="field">探す値
+              <input type="number" id="arr-target" min="1" max="99">
+            </label>
+            <button class="btn small" id="arr-new">新しい配列</button>
+            <button class="btn small" id="arr-pick">配列内の値を選ぶ</button>
+            <label class="check"><input type="checkbox" id="arr-sorted"> ソート済み</label>
+          </div>
+          <div class="bars" id="bars"></div>
+          <p class="log" id="arr-log"></p>
+          <ul class="legend">
+            <li><span class="chip" style="--c: var(--bar)"></span>未比較</li>
+            <li><span class="chip" style="--c: var(--bar-current)"></span>比較中</li>
+            <li><span class="chip" style="--c: var(--bar-checked)"></span>比較済み</li>
+            <li><span class="chip" style="--c: var(--bar-out)"></span>探索範囲外</li>
+            <li><span class="chip" style="--c: var(--bar-found)"></span>発見</li>
+            <li><b class="mark-sample">L / M / H</b>下端・中央・上端</li>
+          </ul>
+        </section>
+
+        <!-- 焼きなまし法 -->
+        <section class="view" id="view-anneal" hidden>
+          <div class="options">
+            <label class="field">初期温度
+              <input type="range" id="sa-t0" min="1" max="100" value="30">
+              <output id="sa-t0-out"></output>
+            </label>
+            <label class="field">冷却率
+              <input type="range" id="sa-alpha" min="0.9" max="0.999" step="0.001" value="0.99">
+              <output id="sa-alpha-out"></output>
+            </label>
+            <label class="field">近傍の幅
+              <input type="range" id="sa-step" min="1" max="30" value="8">
+              <output id="sa-step-out"></output>
+            </label>
+            <button class="btn small" id="sa-new">地形を変更</button>
+          </div>
+          <div class="canvas-wrap"><canvas id="sa-canvas"></canvas></div>
+          <div class="canvas-wrap"><canvas id="sa-chart"></canvas></div>
+          <p class="hint">目的：f(x) が最小となる x を探す。グラフをクリックすると開始点を変更できます。</p>
+          <ul class="legend">
+            <li><span class="chip dot" style="--c: var(--accent)"></span>現在の解</li>
+            <li><span class="chip dot" style="--c: var(--gold)"></span>最良解</li>
+            <li><span class="chip line" style="--c: var(--good)"></span>改善して受理</li>
+            <li><span class="chip line" style="--c: var(--warn)"></span>悪化だが受理</li>
+            <li><span class="chip line" style="--c: var(--muted)"></span>棄却</li>
+          </ul>
+        </section>
+      </div>
+
+      <aside class="side">
+        <div class="card">
+          <h2 id="algo-name"></h2>
+          <p id="algo-desc"></p>
+        </div>
+        <div class="card">
+          <h2>統計</h2>
+          <dl id="stats" class="stats"></dl>
+        </div>
+        <p class="hint keys">ショートカット：Space 実行/一時停止、→ 1ステップ、R リセット</p>
+      </aside>
+    </div>
+  </main>
+
+  <script src="js/util.js"></script>
+  <script src="js/runner.js"></script>
+  <script src="js/algorithms.js"></script>
+  <script src="js/grid-view.js"></script>
+  <script src="js/array-view.js"></script>
+  <script src="js/anneal-view.js"></script>
+  <script src="js/main.js"></script>
+</body>
+</html>
